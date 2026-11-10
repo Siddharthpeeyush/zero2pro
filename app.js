@@ -40,9 +40,6 @@ send:{hinglish:'Send',english:'Send',hindi:'भेजें'},
 yourName:{hinglish:'Your name',english:'Your name',hindi:'आपका नाम'},
 chooseLang:{hinglish:'Choose your language',english:'Choose your language',hindi:'अपनी भाषा चुनें'},
 begin:{hinglish:'Start Learning — Free',english:'Start Learning — Free',hindi:'सीखना शुरू करें — मुफ़्त'},
-planLock:{hinglish:'Level 2–5 need the ₹49/month plan. Demo only — no real payment yet.',english:'Levels 2–5 need the ₹49/month plan. Demo only — no real payment yet.',hindi:'लेवल 2–5 के लिए ₹49/माह का प्लान चाहिए। डेमो है — असली भुगतान नहीं।'},
-activateDemo:{hinglish:'Activate Plan (Demo)',english:'Activate Plan (Demo)',hindi:'प्लान चालू करें (डेमो)'},
-planActive:{hinglish:'Plan active — full path unlocked',english:'Plan active — full path unlocked',hindi:'प्लान चालू है — पूरा रास्ता खुला है'},
 copy:{hinglish:'Copy',english:'Copy',hindi:'कॉपी करें'},
 copied:{hinglish:'Copied!',english:'Copied!',hindi:'कॉपी हो गया!'},
 save:{hinglish:'Save',english:'Save',hindi:'सहेजें'},
@@ -279,7 +276,7 @@ build:{hinglish:'Apne agle 30 din ka plan likho: roz kya seekhoge, kya banaoge.'
 ];
 
 /* ---- State ---- */
-var defaultState={name:'',lang:'hinglish',xp:0,streak:0,lastDay:'',completed:{},doubts:[],flashKnown:{},interview:[],missionDate:'',missionDone:false,plan:false,badges:[]};
+var defaultState={name:'',lang:'hinglish',xp:0,streak:0,lastDay:'',completed:{},doubts:[],flashKnown:{},interview:[],missionDate:'',missionDone:false,badges:[]};
 var state=load();
 function load(){try{var s=JSON.parse(localStorage.getItem(LS_KEY)||'null');if(s&&typeof s==='object')return Object.assign({},defaultState,s);}catch(e){}return Object.assign({},defaultState);}
 function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(state));}catch(e){}}
@@ -289,8 +286,8 @@ function addXP(n){state.xp+=n;var b=[['First Lesson',50],['100 XP',100],['500 XP
 function toast(msg){var el=document.getElementById('toast');el.textContent=msg;el.style.display='block';setTimeout(function(){el.style.display='none';},2600);}
 function lessonById(id){for(var i=0;i<LESSONS.length;i++)if(LESSONS[i].id===id)return LESSONS[i];return null;}
 function lessonIndex(id){for(var i=0;i<LESSONS.length;i++)if(LESSONS[i].id===id)return i;return -1;}
-function isUnlocked(les){var idx=lessonIndex(les.id);if(idx===0)return true;var prev=LESSONS[idx-1];var sc=state.completed[prev.id];if(!sc||sc<80)return false;if(les.level>=2&&!state.plan)return false;return true;}
-function isPlanLocked(les){var idx=lessonIndex(les.id);if(idx===0)return false;var prev=LESSONS[idx-1];var sc=state.completed[prev.id];return les.level>=2&&!state.plan&&sc&&sc>=80;}
+function isUnlocked(les){var idx=lessonIndex(les.id);if(idx===0)return true;var prev=LESSONS[idx-1];var sc=state.completed[prev.id];if(!sc||sc<80)return false;return true;}
+function isPlanLocked(les){return false;}
 function completedCount(){return Object.keys(state.completed).length;}
 function progressPct(){return Math.round(completedCount()/LESSONS.length*100);}
 function nextLesson(){for(var i=0;i<LESSONS.length;i++){var les=LESSONS[i];if(!state.completed[les.id]&&isUnlocked(les))return les;}return LESSONS[LESSONS.length-1];}
@@ -390,7 +387,7 @@ app.innerHTML='<div class="hero"><h1>'+esc(t('heroTitle'))+'</h1><p>'+esc(t('her
 +'<label>'+esc(t('chooseLang'))+'</label><div class="btnrow" id="obLang">'
 +Object.keys(LANGS).map(function(k){return '<button class="btn '+(state.lang===k?'':'secondary')+'" data-l="'+k+'">'+LANGS[k].label+'</button>';}).join('')
 +'</div><div class="btnrow"><button class="btn" id="obStart">'+esc(t('begin'))+'</button></div>'
-+'<p class="small" style="margin-top:10px">Level 0–1 free • Full path ₹49/month (demo) • '+(state.lang==='hindi'?'कोई बड़ा शुल्क नहीं।':state.lang==='english'?'No big fees.':'Koi badi fees nahi.')+'</p></div>';
++'<p class="small" style="margin-top:10px">'+(state.lang==='hindi'?'सब कुछ मुफ़्त — सभी लेवल, सभी पाठ।':state.lang==='english'?'Everything free — all levels, all lessons.':'Sab kuch free — saare levels, saare lessons.')+'</p></div>';
 document.querySelectorAll('#obLang button').forEach(function(b){b.onclick=function(){state.lang=b.getAttribute('data-l');save();renderOnboarding();};});
 document.getElementById('obStart').onclick=function(){var n=document.getElementById('obName').value.trim();if(!n){toast(state.lang==='hindi'?'कृपया नाम लिखें':state.lang==='english'?'Please type your name':'Please apna naam likho');return;}state.name=n;save();location.hash='#/home';render();toast('Welcome, '+n+'!');};
 }
@@ -409,17 +406,15 @@ app.innerHTML='<div class="hero"><h1>'+esc(t('heroTitle'))+'</h1><p>'+esc(t('her
 }
 function renderPath(){
 var h='<div class="hero"><h1>🗺️ '+esc(t('path'))+'</h1><p>'+esc(t('heroSub'))+'</p></div>';
-if(!state.plan)h+='<div class="notice">🔒 '+esc(t('planLock'))+' <button class="btn" style="margin-left:8px" onclick="activatePlan()">'+esc(t('activateDemo'))+'</button></div>';
-else h+='<div class="okbox">✅ '+esc(t('planActive'))+'</div>';
+h+='<div class="okbox">✅ '+(state.lang==='hindi'?'सब कुछ मुफ़्त — सभी लेवल खुले हैं।':state.lang==='english'?'Everything is free — all levels are open.':'Sab kuch free — saare levels khule hain.')+'</div>';
 LEVELS.forEach(function(lv){
 var ls=LESSONS.filter(function(x){return x.level===lv.id;});
-h+='<div class="level"><div class="level-head"><div><b>'+esc(L(lv.title))+'</b><div class="small">'+esc(L(lv.desc))+'</div></div><span class="pill '+(lv.id<2?'green':'yellow')+'">'+(lv.id<2?esc(t('free')):'₹49/mo')+'</span></div>';
+h+='<div class="level"><div class="level-head"><div><b>'+esc(L(lv.title))+'</b><div class="small">'+esc(L(lv.desc))+'</div></div><span class="pill green">'+esc(t('free'))+'</span></div>';
 ls.forEach(function(les){var sc=state.completed[les.id];var un=isUnlocked(les);var pl=isPlanLocked(les);
-h+='<div class="lesson '+(sc!=null?'done':'')+' '+(!un?'locked':'')+'"><div class="num">'+(sc!=null?'✓':les.id.replace('L',''))+'</div><div style="flex:1"><h4>'+esc(L(les.title))+'</h4><p>'+(sc!=null?sc+'% • '+esc(t('done')):pl?'🔒 '+esc(t('planLock')):!un?'🔒 '+esc(t('locked')):'—')+'</p></div>'+(un?'<a class="btn" href="#/lesson/'+les.id+'">'+esc(sc!=null?t('review'):t('start'))+'</a>':pl?'<button class="btn" onclick="activatePlan()">'+esc(t('activateDemo'))+'</button>':'<span class="pill">'+esc(t('locked'))+'</span>')+'</div>';});
+h+='<div class="lesson '+(sc!=null?'done':'')+' '+(!un?'locked':'')+'"><div class="num">'+(sc!=null?'✓':les.id.replace('L',''))+'</div><div style="flex:1"><h4>'+esc(L(les.title))+'</h4><p>'+(sc!=null?sc+'% • '+esc(t('done')):!un?'🔒 '+esc(t('locked')):'—')+'</p></div>'+(un?'<a class="btn" href="#/lesson/'+les.id+'">'+esc(sc!=null?t('review'):t('start'))+'</a>':'<span class="pill">'+esc(t('locked'))+'</span>')+'</div>';});
 h+='</div>';});
 app.innerHTML=h;
 }
-window.activatePlan=function(){state.plan=true;save();toast(state.lang==='hindi'?'प्लान चालू (डेमो) — पूरा रास्ता खुला!':state.lang==='english'?'Plan activated (demo) — full path unlocked!':'Plan active (demo) — poora rasta khul gaya!');render();};
 
 /* ---- Lesson player ---- */
 var quizAnswers={};var quizDone=false;
@@ -509,16 +504,16 @@ document.getElementById('missionDone').onclick=function(){if(state.missionDone)r
 }
 function parentReportText(){
 var weak=weakTopics().map(function(w){return L(w.title);}).join(', ')||(state.lang==='hindi'?'कोई नहीं':'None');
-if(state.lang==='hindi')return 'Zero2Pro — साप्ताहिक रिपोर्ट\nनाम: '+state.name+'\nइस हफ्ते पूरे पाठ: '+completedCount()+' / '+LESSONS.length+' ('+progressPct()+'%)\nलगातार दिन: '+state.streak+' | XP: '+state.xp+'\nकमज़ोर विषय: '+weak+'\nअगला कदम: '+L(nextLesson().title)+'\nशुल्क: लेवल 0–1 मुफ़्त, पूरा रास्ता ₹49/माह।';
-if(state.lang==='english')return 'Zero2Pro — Weekly Report\nName: '+state.name+'\nLessons completed: '+completedCount()+' / '+LESSONS.length+' ('+progressPct()+'%)\nStreak: '+state.streak+' days | XP: '+state.xp+'\nWeak topics: '+weak+'\nNext step: '+L(nextLesson().title)+'\nFees: Levels 0–1 free, full path Rs 49/month.';
-return 'Zero2Pro — Hafta Report\nNaam: '+state.name+'\nIs hafte poore lessons: '+completedCount()+' / '+LESSONS.length+' ('+progressPct()+'%)\nStreak: '+state.streak+' din | XP: '+state.xp+'\nWeak topics: '+weak+'\nAgla step: '+L(nextLesson().title)+'\nFees: Level 0–1 free, poora rasta ₹49/month.';
+if(state.lang==='hindi')return 'Zero2Pro — साप्ताहिक रिपोर्ट\nनाम: '+state.name+'\nइस हफ्ते पूरे पाठ: '+completedCount()+' / '+LESSONS.length+' ('+progressPct()+'%)\nलगातार दिन: '+state.streak+' | XP: '+state.xp+'\nकमज़ोर विषय: '+weak+'\nअगला कदम: '+L(nextLesson().title)+'';
+if(state.lang==='english')return 'Zero2Pro — Weekly Report\nName: '+state.name+'\nLessons completed: '+completedCount()+' / '+LESSONS.length+' ('+progressPct()+'%)\nStreak: '+state.streak+' days | XP: '+state.xp+'\nWeak topics: '+weak+'\nNext step: '+L(nextLesson().title)+'';
+return 'Zero2Pro — Hafta Report\nNaam: '+state.name+'\nIs hafte poore lessons: '+completedCount()+' / '+LESSONS.length+' ('+progressPct()+'%)\nStreak: '+state.streak+' din | XP: '+state.xp+'\nWeak topics: '+weak+'\nAgla step: '+L(nextLesson().title)+'';
 }
 function renderParent(){
 app.innerHTML='<div class="hero"><h1>👪 '+esc(t('parent'))+'</h1><p>'+(state.lang==='hindi'?'माता-पिता के लिए साप्ताहिक रिपोर्ट — असली प्रगति से बनी।':'Weekly report for parents — made from real progress.')+'</p></div><div class="card"><pre class="resume" id="parentText">'+esc(parentReportText())+'</pre><div class="btnrow"><button class="btn" id="copyParent">'+esc(t('copy'))+'</button><a class="btn secondary" id="waParent" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent(parentReportText())+'">'+esc(t('shareWhats'))+'</a></div></div>';
 document.getElementById('copyParent').onclick=function(){navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('parentText').textContent);toast(t('copied'));};
 }
 function renderSettings(){
-app.innerHTML='<div class="card"><h2>⚙️ '+esc(t('settings'))+'</h2><label>'+esc(t('yourName'))+'</label><input type="text" id="setName" value="'+esc(state.name)+'"><label>'+esc(t('chooseLang'))+'</label><div class="btnrow">'+Object.keys(LANGS).map(function(k){return '<button class="btn '+(state.lang===k?'':'secondary')+'" data-l="'+k+'">'+LANGS[k].label+'</button>';}).join('')+'</div><div class="btnrow"><button class="btn" id="setSave">'+esc(t('save'))+'</button><button class="btn danger" id="setReset">'+esc(t('reset'))+'</button></div><p class="small">Progress is saved on this device (localStorage). Plan: '+(state.plan?'Active (demo)':'Not active')+' • XP: '+state.xp+'</p></div>';
+app.innerHTML='<div class="card"><h2>⚙️ '+esc(t('settings'))+'</h2><label>'+esc(t('yourName'))+'</label><input type="text" id="setName" value="'+esc(state.name)+'"><label>'+esc(t('chooseLang'))+'</label><div class="btnrow">'+Object.keys(LANGS).map(function(k){return '<button class="btn '+(state.lang===k?'':'secondary')+'" data-l="'+k+'">'+LANGS[k].label+'</button>';}).join('')+'</div><div class="btnrow"><button class="btn" id="setSave">'+esc(t('save'))+'</button><button class="btn danger" id="setReset">'+esc(t('reset'))+'</button></div><p class="small">Progress is saved on this device (localStorage). Everything is free • XP: '+state.xp+'</p></div>';
 document.querySelectorAll('[data-l]').forEach(function(b){b.onclick=function(){setLang(b.getAttribute('data-l'));};});
 document.getElementById('setSave').onclick=function(){var n=document.getElementById('setName').value.trim();if(n)state.name=n;save();toast(t('copied'));render();};
 document.getElementById('setReset').onclick=function(){if(confirm('Reset all progress?')){localStorage.removeItem(LS_KEY);location.hash='';location.reload();}};
